@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OkhikuAnalytics Pro - Advanced Oil & Gas Analytics by Joseph Okhiku</title>
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Chart.js for visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <!-- Chart.js date adapter for time-based charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns@3.0.0/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+    <!-- jsPDF for PDF generation -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <!-- html2canvas for screenshot capture -->
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css">
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Header -->
+    <header class="app-header">
+        <div class="header-content">
+            <div class="logo">
+                <i class="fas fa-oil-well"></i>
+                <h1>OkhikuAnalytics Pro</h1>
+            </div>
+            <div class="header-actions">
+                <button id="refreshDataBtn" class="btn btn-info" title="Reload data from Google Sheets">
+                    <i class="fas fa-sync"></i> Refresh Data
+                </button>
+                <button id="importDataBtn" class="btn btn-primary">
+                    <i class="fas fa-upload"></i> Import Data
+                </button>
+                <div class="dropdown">
+                    <button id="generateReportBtn" class="btn btn-success">
+                        <i class="fas fa-file-pdf"></i> Generate Report <i class="fas fa-chevron-down"></i>
+                    </button>
+                    <div class="dropdown-menu" id="reportMenu">
+                        <button class="dropdown-item" data-report="executive">
+                            <i class="fas fa-users"></i> Executive Summary (PDF)
+                        </button>
+                        <button class="dropdown-item" data-report="technical">
+                            <i class="fas fa-cogs"></i> Technical Report (PDF)
+                        </button>
+                        <button class="dropdown-item" data-report="monthly">
+                            <i class="fas fa-calendar-alt"></i> Monthly Report (PDF)
+                        </button>
+                        <button class="dropdown-item" data-report="board">
+                            <i class="fas fa-presentation"></i> Board Report (PDF)
+                        </button>
+                        <div class="dropdown-divider"></div>
+                        <button class="dropdown-item" data-report="dashboard-png">
+                            <i class="fas fa-image"></i> Export Dashboard (PNG)
+                        </button>
+                        <button class="dropdown-item" data-report="chart-png">
+                            <i class="fas fa-chart-bar"></i> Export Chart (PNG)
+                        </button>
+                    </div>
+                </div>
+                <button id="exportReportBtn" class="btn btn-secondary">
+                    <i class="fas fa-file-export"></i> Export Data (JSON)
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <div class="app-container">
+        <!-- Sidebar Navigation -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <div class="nav-item active" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i>
+                    <span>Dashboard</span>
+                </div>
+                <div class="nav-item" data-view="production">
+                    <i class="fas fa-industry"></i>
+                    <span>Production Performance</span>
+                </div>
+                <div class="nav-item" data-view="economics">
+                    <i class="fas fa-dollar-sign"></i>
+                    <span>Economic Analysis</span>
+                </div>
+                <div class="nav-item" data-view="drilling">
+                    <i class="fas fa-drill"></i>
+                    <span>Drilling & Completions</span>
+                </div>
+                <div class="nav-item" data-view="typecurve">
+                    <i class="fas fa-chart-area"></i>
+                    <span>Type Curve Analysis</span>
+                </div>
+                <div class="nav-item" data-view="assetcomparison">
+                    <i class="fas fa-layer-group"></i>
+                    <span>Asset Comparison</span>
+                </div>
+                <div class="nav-item" data-view="wells">
+                    <i class="fas fa-table"></i>
+                    <span>Well Data Table</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content Area -->
+        <main class="main-content">
+            <!-- Dashboard View -->
+            <div id="dashboardView" class="view-container active">
+                <div class="view-header">
+                    <h2>Portfolio Dashboard</h2>
+                    <p class="view-description">Key performance indicators and portfolio overview</p>
+                </div>
+                
+                <!-- KPI Cards -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon blue">
+                            <i class="fas fa-oil-can"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Total Production</div>
+                            <div class="kpi-value" id="totalProduction">0</div>
+                            <div class="kpi-unit">BBL/day</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon green">
+                            <i class="fas fa-chart-line"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Active Wells</div>
+                            <div class="kpi-value" id="activeWells">0</div>
+                            <div class="kpi-unit">wells</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon orange">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Portfolio NPV</div>
+                            <div class="kpi-value" id="portfolioNPV">$0</div>
+                            <div class="kpi-unit">MM USD</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon purple">
+                            <i class="fas fa-percent"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Avg IRR</div>
+                            <div class="kpi-value" id="avgIRR">0</div>
+                            <div class="kpi-unit">%</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Production Trends</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="productionTrendChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Economic Distribution</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="economicDistChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>Top 10 Producing Wells</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="topWellsChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Production Performance View -->
+            <div id="productionView" class="view-container">
+                <div class="view-header">
+                    <h2>Production Performance & Surveillance</h2>
+                    <p class="view-description">Monitor production trends, forecasts, and well performance</p>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="prodWellFilter" class="filter-select">
+                        <option value="all">All Wells</option>
+                    </select>
+                    <select id="prodTimeFilter" class="filter-select">
+                        <option value="30">Last 30 Days</option>
+                        <option value="90">Last 90 Days</option>
+                        <option value="180">Last 180 Days</option>
+                        <option value="365" selected>Last Year</option>
+                        <option value="all">All Time</option>
+                    </select>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>Production vs Forecast</h3>
+                        <div class="chart-wrapper" style="height: 350px;">
+                            <canvas id="prodVsForecastChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Cumulative Production</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="cumulativeProdChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Water Cut Trends</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="waterCutChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+                            <h3 id="performanceTableTitle">Top 10 Underperforming Wells</h3>
+                            <div class="toggle-buttons">
+                                <button class="toggle-btn active" data-type="underperforming">
+                                    <i class="fas fa-arrow-down"></i> Underperforming
+                                </button>
+                                <button class="toggle-btn" data-type="top">
+                                    <i class="fas fa-arrow-up"></i> Top Performers
+                                </button>
+                            </div>
+                        </div>
+                        <div id="performanceTable" class="data-table-container"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Economic Analysis View -->
+            <div id="economicsView" class="view-container">
+                <div class="view-header">
+                    <h2>Economic Analysis</h2>
+                    <p class="view-description">Portfolio economics, NPV, IRR, and break-even analysis</p>
+                </div>
+
+                <!-- Scenario Analysis Controls -->
+                <div class="scenario-controls">
+                    <div class="scenario-header">
+                        <h3><i class="fas fa-sliders-h"></i> Economic Scenario Analysis</h3>
+                        <p>Adjust price assumptions and see real-time impact on portfolio economics</p>
+                    </div>
+                    
+                    <div class="scenario-presets">
+                        <label><strong>Quick Scenarios:</strong></label>
+                        <button class="scenario-btn" data-scenario="bear">
+                            <i class="fas fa-arrow-down"></i> Bear Case
+                        </button>
+                        <button class="scenario-btn active" data-scenario="base">
+                            <i class="fas fa-equals"></i> Base Case
+                        </button>
+                        <button class="scenario-btn" data-scenario="bull">
+                            <i class="fas fa-arrow-up"></i> Bull Case
+                        </button>
+                    </div>
+                    
+                    <div class="control-panel">
+                        <div class="input-group">
+                            <label>Oil Price ($/BBL)</label>
+                            <input type="number" id="oilPrice" value="70" min="0" step="5">
+                            <span class="scenario-label" id="oilScenarioLabel">Base Case</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Gas Price ($/MCF)</label>
+                            <input type="number" id="gasPrice" value="3.5" min="0" step="0.5">
+                            <span class="scenario-label" id="gasScenarioLabel">Base Case</span>
+                        </div>
+                        <div class="input-group">
+                            <label>Discount Rate (%)</label>
+                            <input type="number" id="discountRate" value="10" min="0" step="1">
+                        </div>
+                        <button id="recalculateEcon" class="btn btn-primary">
+                            <i class="fas fa-calculator"></i> Recalculate Economics
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Scenario Comparison Table -->
+                <div class="scenario-comparison">
+                    <h3><i class="fas fa-balance-scale"></i> Scenario Comparison Summary</h3>
+                    <div id="scenarioComparisonTable"></div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>NPV vs IRR Bubble Chart</h3>
+                        <div class="chart-wrapper" style="height: 400px;">
+                            <canvas id="npvIrrBubbleChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Break-Even Price Distribution</h3>
+                        <div class="chart-wrapper" style="height: 400px;">
+                            <canvas id="breakEvenHistChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>Capital Spend vs Budget by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="capexBudgetChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Budget Variance Summary -->
+                <div class="budget-variance-summary">
+                    <h3>Budget Variance Analysis</h3>
+                    <div id="budgetVarianceTable" class="variance-table"></div>
+                </div>
+
+                <div class="economics-table-container">
+                    <h3>Well Economics Summary</h3>
+                    <div id="economicsTable" class="data-table-container"></div>
+                </div>
+            </div>
+
+            <!-- Drilling & Completions View -->
+            <div id="drillingView" class="view-container">
+                <div class="view-header">
+                    <h2>Drilling & Completions Performance</h2>
+                    <p class="view-description">Track drilling efficiency, costs, and completion performance</p>
+                </div>
+
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon blue">
+                            <i class="fas fa-calendar-day"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Avg Drilling Days</div>
+                            <div class="kpi-value" id="avgDrillingDays">0</div>
+                            <div class="kpi-unit">days</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon green">
+                            <i class="fas fa-dollar-sign"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Avg Well Cost</div>
+                            <div class="kpi-value" id="avgWellCost">$0</div>
+                            <div class="kpi-unit">MM USD</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon orange">
+                            <i class="fas fa-ruler-horizontal"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Avg Lateral Length</div>
+                            <div class="kpi-value" id="avgLateralLength">0</div>
+                            <div class="kpi-unit">ft</div>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon purple">
+                            <i class="fas fa-oil-can"></i>
+                        </div>
+                        <div class="kpi-content">
+                            <div class="kpi-label">Avg IP30</div>
+                            <div class="kpi-value" id="avgIP30">0</div>
+                            <div class="kpi-unit">BBL/day</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Drilling Days vs Depth</h3>
+                        <div class="chart-wrapper" style="height: 350px;">
+                            <canvas id="drillingDaysChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Cost per Foot vs Lateral Length</h3>
+                        <div class="chart-wrapper" style="height: 350px;">
+                            <canvas id="costPerFootChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>30-Day IP Comparison by Completion Design</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="ip30ComparisonChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Type Curve Analysis View -->
+            <div id="typecurveView" class="view-container">
+                <div class="view-header">
+                    <h2>Type Curve Analysis</h2>
+                    <p class="view-description">Decline curve analysis and production forecasting</p>
+                </div>
+
+                <div class="filter-bar">
+                    <select id="typecurveVintage" class="filter-select">
+                        <option value="all">All Vintages</option>
+                        <option value="2024">2024</option>
+                        <option value="2023">2023</option>
+                        <option value="2022">2022</option>
+                        <option value="2021">2021</option>
+                    </select>
+                    <select id="typecurveCompletion" class="filter-select">
+                        <option value="all">All Completion Types</option>
+                        <option value="Slickwater">Slickwater</option>
+                        <option value="Hybrid">Hybrid</option>
+                        <option value="Gel">Gel</option>
+                    </select>
+                    <button id="updateTypeCurve" class="btn btn-primary">
+                        <i class="fas fa-sync"></i> Update
+                    </button>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>Normalized Decline Curves</h3>
+                        <div class="chart-wrapper" style="height: 400px;">
+                            <canvas id="declineCurveChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Cumulative Oil vs Proppant Loaded</h3>
+                        <div class="chart-wrapper" style="height: 350px;">
+                            <canvas id="cumOilProppantChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>EUR Distribution by Vintage</h3>
+                        <div class="chart-wrapper" style="height: 350px;">
+                            <canvas id="eurDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="type-curve-params">
+                    <h3>Hyperbolic Decline Parameters</h3>
+                    <div class="param-grid">
+                        <div class="param-card">
+                            <label>Initial Rate (qi)</label>
+                            <div class="param-value" id="paramQi">-</div>
+                        </div>
+                        <div class="param-card">
+                            <label>Decline Rate (Di)</label>
+                            <div class="param-value" id="paramDi">-</div>
+                        </div>
+                        <div class="param-card">
+                            <label>b-factor</label>
+                            <div class="param-value" id="paramB">-</div>
+                        </div>
+                        <div class="param-card">
+                            <label>EUR (MMbbl)</label>
+                            <div class="param-value" id="paramEUR">-</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Asset Comparison View -->
+            <div id="assetcomparisonView" class="view-container">
+                <div class="view-header">
+                    <h2>Asset Comparison</h2>
+                    <p class="view-description">Compare performance across all assets in your portfolio</p>
+                </div>
+
+                <!-- Asset Summary Cards Grid -->
+                <div id="assetCardsGrid" class="asset-cards-grid"></div>
+
+                <!-- Asset Comparison Charts -->
+                <div class="charts-grid">
+                    <div class="chart-container full-width">
+                        <h3>Total NPV by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="assetNPVChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Total Production by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="assetProductionChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Average IRR by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="assetIRRChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3>Well Count by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="assetWellCountChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Average Break-Even Price by Asset</h3>
+                        <div class="chart-wrapper" style="height: 300px;">
+                            <canvas id="assetBreakEvenChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Asset Performance Rankings -->
+                <div class="asset-rankings">
+                    <h3>Asset Performance Rankings</h3>
+                    
+                    <div class="rankings-grid">
+                        <div class="ranking-card">
+                            <h4><i class="fas fa-trophy"></i> Top Assets by NPV</h4>
+                            <div id="topAssetsByNPV" class="ranking-list"></div>
+                        </div>
+                        
+                        <div class="ranking-card">
+                            <h4><i class="fas fa-chart-line"></i> Top Assets by Production</h4>
+                            <div id="topAssetsByProduction" class="ranking-list"></div>
+                        </div>
+                        
+                        <div class="ranking-card">
+                            <h4><i class="fas fa-percentage"></i> Top Assets by IRR</h4>
+                            <div id="topAssetsByIRR" class="ranking-list"></div>
+                        </div>
+                        
+                        <div class="ranking-card">
+                            <h4><i class="fas fa-dollar-sign"></i> Lowest Break-Even Prices</h4>
+                            <div id="topAssetsByBreakEven" class="ranking-list"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Detailed Asset Comparison Table -->
+                <div class="asset-comparison-table">
+                    <h3>Detailed Asset Metrics</h3>
+                    <div id="assetComparisonTable" class="data-table-container"></div>
+                </div>
+            </div>
+
+            <!-- Well Data Table View -->
+            <div id="wellsView" class="view-container">
+                <div class="view-header">
+                    <h2>Well Data Table</h2>
+                    <p class="view-description">Comprehensive well information and filtering</p>
+                </div>
+
+                <div class="table-controls">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="wellSearch" placeholder="Search wells...">
+                    </div>
+                    <div class="filter-group">
+                        <select id="wellStatusFilter" class="filter-select">
+                            <option value="all">All Status</option>
+                            <option value="Active">Active</option>
+                            <option value="Shut-in">Shut-in</option>
+                            <option value="Drilling">Drilling</option>
+                        </select>
+                        <select id="wellAssetFilter" class="filter-select">
+                            <option value="all">All Assets</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div id="wellDataTable" class="data-table-container scrollable"></div>
+
+                <div class="table-pagination">
+                    <button id="prevPage" class="btn btn-secondary">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </button>
+                    <span id="pageInfo" class="page-info">Page 1 of 1</span>
+                    <button id="nextPage" class="btn btn-secondary">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Import Data Modal -->
+    <div id="importModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Well Data</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="import-options">
+                    <button id="loadSampleData" class="btn btn-primary">
+                        <i class="fas fa-database"></i> Load Sample Data
+                    </button>
+                    <div class="divider">OR</div>
+                    <div class="file-upload-area">
+                        <i class="fas fa-file-csv"></i>
+                        <p>Drop CSV file here or click to browse</p>
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;">
+                        <button id="browseFile" class="btn btn-secondary">Browse Files</button>
+                    </div>
+                </div>
+                <div id="importStatus" class="import-status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chart Export Modal -->
+    <div id="chartExportModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Chart as PNG</h3>
+                <button class="close-modal">&times;</button>
+            </div>
+            <div class="modal-body">
+                <p class="modal-description">Select a chart to export as PNG image:</p>
+                <div class="chart-selection-grid">
+                    <button class="chart-export-btn" data-chart="productionTrendChart">
+                        <i class="fas fa-chart-line"></i> Production Trends
+                    </button>
+                    <button class="chart-export-btn" data-chart="economicDistChart">
+                        <i class="fas fa-chart-bar"></i> Economic Distribution
+                    </button>
+                    <button class="chart-export-btn" data-chart="topWellsChart">
+                        <i class="fas fa-chart-bar"></i> Top Wells
+                    </button>
+                    <button class="chart-export-btn" data-chart="prodVsForecastChart">
+                        <i class="fas fa-chart-line"></i> Production vs Forecast
+                    </button>
+                    <button class="chart-export-btn" data-chart="cumulativeProdChart">
+                        <i class="fas fa-chart-area"></i> Cumulative Production
+                    </button>
+                    <button class="chart-export-btn" data-chart="waterCutChart">
+                        <i class="fas fa-chart-line"></i> Water Cut
+                    </button>
+                    <button class="chart-export-btn" data-chart="npvIrrBubbleChart">
+                        <i class="fas fa-circle"></i> NPV vs IRR Bubble
+                    </button>
+                    <button class="chart-export-btn" data-chart="breakEvenHistChart">
+                        <i class="fas fa-chart-bar"></i> Break-Even Histogram
+                    </button>
+                    <button class="chart-export-btn" data-chart="capexBudgetChart">
+                        <i class="fas fa-chart-bar"></i> CAPEX vs Budget
+                    </button>
+                    <button class="chart-export-btn" data-chart="drillingDaysChart">
+                        <i class="fas fa-chart-scatter"></i> Drilling Days vs Depth
+                    </button>
+                    <button class="chart-export-btn" data-chart="costPerFootChart">
+                        <i class="fas fa-chart-scatter"></i> Cost per Foot
+                    </button>
+                    <button class="chart-export-btn" data-chart="ip30ComparisonChart">
+                        <i class="fas fa-chart-bar"></i> IP30 Comparison
+                    </button>
+                    <button class="chart-export-btn" data-chart="declineCurveChart">
+                        <i class="fas fa-chart-line"></i> Decline Curves
+                    </button>
+                    <button class="chart-export-btn" data-chart="cumOilProppantChart">
+                        <i class="fas fa-chart-scatter"></i> Oil vs Proppant
+                    </button>
+                    <button class="chart-export-btn" data-chart="eurDistributionChart">
+                        <i class="fas fa-chart-bar"></i> EUR Distribution
+                    </button>
+                </div>
+                <div id="chartExportStatus" class="import-status"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Generation Progress Modal -->
+    <div id="reportProgressModal" class="modal">
+        <div class="modal-content modal-small">
+            <div class="modal-body text-center">
+                <div class="spinner"></div>
+                <h3>Generating Report...</h3>
+                <p id="reportProgressText">Please wait while we prepare your report</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="config.js"></script>
+    <script src="js/data.js"></script>
+    <script src="js/analytics.js"></script>
+    <script src="js/charts.js"></script>
+    <script src="js/reports.js"></script>
+    <script src="js/google-sheets-loader.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

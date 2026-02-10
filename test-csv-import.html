@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSV Import Test - OkhikuAnalytics Pro</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 2rem;
+            background: #f8fafc;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #1e293b;
+        }
+        .test-section {
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .import-area {
+            border: 2px dashed #cbd5e1;
+            padding: 2rem;
+            border-radius: 0.5rem;
+            text-align: center;
+            margin: 1rem 0;
+        }
+        .import-area.dragover {
+            border-color: #3b82f6;
+            background: #eff6ff;
+        }
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1rem;
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .result {
+            margin-top: 1rem;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+        }
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+            font-size: 0.875rem;
+        }
+        th {
+            background: #1e293b;
+            color: white;
+            font-weight: 600;
+        }
+        tr:hover {
+            background: #f8fafc;
+        }
+        .metric {
+            font-weight: 600;
+            color: #3b82f6;
+        }
+        input[type="file"] {
+            display: none;
+        }
+        .file-label {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .file-label:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 CSV Import Test - OkhikuAnalytics Pro</h1>
+    
+    <div class="test-section">
+        <h2>Step 1: Select CSV File</h2>
+        <div class="import-area" id="dropArea">
+            <p><strong>Drag & drop your CSV file here</strong></p>
+            <p>or</p>
+            <label for="fileInput" class="file-label">
+                📂 Browse Files
+            </label>
+            <input type="file" id="fileInput" accept=".csv">
+        </div>
+        <div id="fileInfo"></div>
+    </div>
+    
+    <div class="test-section" id="resultsSection" style="display: none;">
+        <h2>Step 2: Import Results</h2>
+        <div id="importResults"></div>
+    </div>
+    
+    <div class="test-section" id="dataSection" style="display: none;">
+        <h2>Step 3: Imported Data Summary</h2>
+        <div id="dataSummary"></div>
+    </div>
+    
+    <div class="test-section" id="sampleSection" style="display: none;">
+        <h2>Step 4: Sample Data Preview</h2>
+        <div id="sampleData"></div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script>
+        const dropArea = document.getElementById('dropArea');
+        const fileInput = document.getElementById('fileInput');
+        const fileInfo = document.getElementById('fileInfo');
+        const resultsSection = document.getElementById('resultsSection');
+        const importResults = document.getElementById('importResults');
+        const dataSection = document.getElementById('dataSection');
+        const dataSummary = document.getElementById('dataSummary');
+        const sampleSection = document.getElementById('sampleSection');
+        const sampleData = document.getElementById('sampleData');
+        
+        // Drag and drop handlers
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, preventDefaults, false);
+        });
+        
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+        
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.add('dragover');
+            });
+        });
+        
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropArea.addEventListener(eventName, () => {
+                dropArea.classList.remove('dragover');
+            });
+        });
+        
+        dropArea.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFile(files[0]);
+            }
+        });
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                handleFile(e.target.files[0]);
+            }
+        });
+        
+        function handleFile(file) {
+            console.log('📁 File selected:', file.name);
+            
+            fileInfo.innerHTML = `
+                <div class="result info">
+                    <strong>File selected:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${(file.size / 1024).toFixed(2)} KB<br>
+                    <strong>Type:</strong> ${file.type || 'text/csv'}
+                </div>
+            `;
+            
+            // Read and import the file
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const csvText = e.target.result;
+                    console.log('📄 CSV text length:', csvText.length);
+                    console.log('First 200 chars:', csvText.substring(0, 200));
+                    
+                    resultsSection.style.display = 'block';
+                    importResults.innerHTML = '<div class="result info">Parsing CSV...</div>';
+                    
+                    // Import using dataStore
+                    const imported = dataStore.importCSV(csvText);
+                    
+                    console.log('✅ Import successful:', imported.length, 'wells');
+                    
+                    // Show success
+                    importResults.innerHTML = `
+                        <div class="result success">
+                            <strong>✓ Import Successful!</strong><br>
+                            Imported ${imported.length} wells from ${file.name}
+                        </div>
+                    `;
+                    
+                    // Show data summary
+                    showDataSummary(imported);
+                    
+                    // Show sample data
+                    showSampleData(imported);
+                    
+                } catch (error) {
+                    console.error('❌ Import error:', error);
+                    importResults.innerHTML = `
+                        <div class="result error">
+                            <strong>✗ Import Failed!</strong><br>
+                            ${error.message}<br>
+                            <small>${error.stack}</small>
+                        </div>
+                    `;
+                }
+            };
+            
+            reader.onerror = () => {
+                importResults.innerHTML = `
+                    <div class="result error">
+                        <strong>✗ File Read Error!</strong><br>
+                        Could not read the file. Please try again.
+                    </div>
+                `;
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        function showDataSummary(wells) {
+            dataSection.style.display = 'block';
+            
+            // Calculate summary metrics
+            const assets = [...new Set(wells.map(w => w.asset))];
+            const activeWells = wells.filter(w => w.status === 'Active').length;
+            const totalProduction = wells.reduce((sum, w) => sum + (parseFloat(w.currentProduction) || 0), 0);
+            const avgNPV = wells.reduce((sum, w) => sum + (parseFloat(w.npv) || 0), 0) / wells.length;
+            const avgIRR = wells.reduce((sum, w) => sum + (parseFloat(w.irr) || 0), 0) / wells.length;
+            
+            // Asset breakdown
+            const assetCounts = {};
+            assets.forEach(asset => {
+                assetCounts[asset] = wells.filter(w => w.asset === asset).length;
+            });
+            
+            let html = `
+                <h3>Portfolio Summary</h3>
+                <table>
+                    <tr>
+                        <th>Metric</th>
+                        <th>Value</th>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Wells</strong></td>
+                        <td class="metric">${wells.length}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Active Wells</strong></td>
+                        <td class="metric">${activeWells}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Number of Assets</strong></td>
+                        <td class="metric">${assets.length}</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Production</strong></td>
+                        <td class="metric">${totalProduction.toFixed(0)} BBL/day</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average NPV</strong></td>
+                        <td class="metric">$${avgNPV.toFixed(2)}M</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average IRR</strong></td>
+                        <td class="metric">${avgIRR.toFixed(1)}%</td>
+                    </tr>
+                </table>
+                
+                <h3 style="margin-top: 2rem;">Wells by Asset</h3>
+                <table>
+                    <tr>
+                        <th>Asset</th>
+                        <th>Well Count</th>
+                        <th>% of Portfolio</th>
+                    </tr>
+            `;
+            
+            assets.forEach(asset => {
+                const count = assetCounts[asset];
+                const pct = ((count / wells.length) * 100).toFixed(1);
+                html += `
+                    <tr>
+                        <td><strong>${asset}</strong></td>
+                        <td class="metric">${count}</td>
+                        <td>${pct}%</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            dataSummary.innerHTML = html;
+        }
+        
+        function showSampleData(wells) {
+            sampleSection.style.display = 'block';
+            
+            // Show first 5 wells
+            let html = `
+                <p><strong>First 5 Wells:</strong></p>
+                <table>
+                    <tr>
+                        <th>Well ID</th>
+                        <th>Well Name</th>
+                        <th>Asset</th>
+                        <th>Status</th>
+                        <th>Current Prod<br>(BBL/day)</th>
+                        <th>NPV<br>(MM$)</th>
+                        <th>IRR<br>(%)</th>
+                    </tr>
+            `;
+            
+            const sample = wells.slice(0, 5);
+            sample.forEach(well => {
+                html += `
+                    <tr>
+                        <td>${well.id || 'N/A'}</td>
+                        <td>${well.name || 'N/A'}</td>
+                        <td>${well.asset || 'N/A'}</td>
+                        <td>${well.status || 'N/A'}</td>
+                        <td class="metric">${well.currentProduction || '0'}</td>
+                        <td class="metric">${well.npv || '0'}</td>
+                        <td class="metric">${well.irr || '0'}</td>
+                    </tr>
+                `;
+            });
+            
+            html += '</table>';
+            sampleData.innerHTML = html;
+        }
+    </script>
+</body>
+</html>

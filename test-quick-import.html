@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick CSV Import Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .result {
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 0;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        pre {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>🧪 Quick CSV Import Test</h1>
+    <p>Select your CSV file to test import:</p>
+    
+    <input type="file" id="fileInput" accept=".csv">
+    <button onclick="testImport()">Test Import</button>
+    
+    <div id="results"></div>
+
+    <script src="js/data.js"></script>
+    <script>
+        function testImport() {
+            const fileInput = document.getElementById('fileInput');
+            const results = document.getElementById('results');
+            
+            if (!fileInput.files.length) {
+                results.innerHTML = '<div class="result error">Please select a CSV file first!</div>';
+                return;
+            }
+            
+            const file = fileInput.files[0];
+            results.innerHTML = '<div class="result">Reading file...</div>';
+            
+            const reader = new FileReader();
+            
+            reader.onload = (e) => {
+                try {
+                    const csvText = e.target.result;
+                    console.log('CSV length:', csvText.length);
+                    console.log('First 500 chars:', csvText.substring(0, 500));
+                    
+                    results.innerHTML = '<div class="result">Parsing CSV...</div>';
+                    
+                    // Test the import
+                    const imported = dataStore.importCSV(csvText);
+                    
+                    // Success!
+                    let html = `<div class="result success">
+                        ✓ SUCCESS! Imported ${imported.length} wells
+                    </div>`;
+                    
+                    // Show summary
+                    html += '<h3>Import Summary:</h3>';
+                    html += '<pre>' + JSON.stringify({
+                        totalWells: imported.length,
+                        sampleWell: imported[0],
+                        assets: [...new Set(imported.map(w => w.asset))],
+                        activeWells: imported.filter(w => w.status === 'Active').length
+                    }, null, 2) + '</pre>';
+                    
+                    results.innerHTML = html;
+                    
+                    // Check dataStore
+                    console.log('DataStore wells:', dataStore.wells.length);
+                    console.log('Sample well from dataStore:', dataStore.wells[0]);
+                    
+                } catch (error) {
+                    console.error('Import error:', error);
+                    results.innerHTML = `<div class="result error">
+                        ✗ ERROR: ${error.message}<br>
+                        <small>${error.stack}</small>
+                    </div>`;
+                }
+            };
+            
+            reader.onerror = () => {
+                results.innerHTML = '<div class="result error">Error reading file</div>';
+            };
+            
+            reader.readAsText(file);
+        }
+        
+        // Also add drag & drop
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length) {
+                    testImport();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

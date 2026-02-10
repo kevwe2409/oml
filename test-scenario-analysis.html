@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Scenario Analysis Test - OkhikuAnalytics Pro</title>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            padding: 2rem;
+            background: #f8fafc;
+        }
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #1e293b;
+            margin-bottom: 1rem;
+        }
+        .test-section {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background: #f8fafc;
+            border-radius: 0.5rem;
+        }
+        .test-result {
+            margin: 0.5rem 0;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+        }
+        .test-pass {
+            background: #dcfce7;
+            color: #166534;
+            border-left: 4px solid #22c55e;
+        }
+        .test-fail {
+            background: #fee2e2;
+            color: #991b1b;
+            border-left: 4px solid #ef4444;
+        }
+        .test-info {
+            background: #dbeafe;
+            color: #1e40af;
+            border-left: 4px solid #3b82f6;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        th {
+            background: #1e293b;
+            color: white;
+            font-weight: 600;
+        }
+        .metric-value {
+            font-weight: 600;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🧪 Scenario Analysis Test Suite</h1>
+        <p><strong>OkhikuAnalytics Pro - Testing Basic Scenario Switching (Option B)</strong></p>
+        
+        <div id="testResults"></div>
+    </div>
+
+    <script src="js/data.js"></script>
+    <script src="js/analytics.js"></script>
+    <script>
+        // Test Suite for Scenario Analysis
+        const results = [];
+        
+        function runTests() {
+            const startTime = performance.now();
+            
+            // Test 1: Verify scenario methods exist
+            testScenarioMethodsExist();
+            
+            // Test 2: Test scenario parameters
+            testScenarioParameters();
+            
+            // Test 3: Test NPV recalculation
+            testNPVRecalculation();
+            
+            // Test 4: Test scenario comparison
+            testScenarioComparison();
+            
+            // Test 5: Test asset-level scenarios
+            testAssetScenarios();
+            
+            // Test 6: Sensitivity analysis
+            testSensitivityAnalysis();
+            
+            const endTime = performance.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(2);
+            
+            displayResults(duration);
+        }
+        
+        function testScenarioMethodsExist() {
+            const methods = [
+                'getScenarioParams',
+                'calculateScenarioNPV',
+                'calculateScenarioIRR',
+                'calculateScenarioMetrics',
+                'calculateAssetScenarios',
+                'compareScenarios'
+            ];
+            
+            methods.forEach(method => {
+                if (typeof analytics[method] === 'function') {
+                    results.push({
+                        test: `Method exists: ${method}`,
+                        status: 'pass',
+                        details: 'Function is defined'
+                    });
+                } else {
+                    results.push({
+                        test: `Method exists: ${method}`,
+                        status: 'fail',
+                        details: 'Function not found'
+                    });
+                }
+            });
+        }
+        
+        function testScenarioParameters() {
+            const scenarios = ['bear', 'base', 'bull'];
+            
+            scenarios.forEach(scenario => {
+                const params = analytics.getScenarioParams(scenario);
+                
+                if (params && params.oilPrice && params.gasPrice) {
+                    results.push({
+                        test: `Scenario params: ${scenario}`,
+                        status: 'pass',
+                        details: `Oil: $${params.oilPrice}, Gas: $${params.gasPrice}`
+                    });
+                } else {
+                    results.push({
+                        test: `Scenario params: ${scenario}`,
+                        status: 'fail',
+                        details: 'Missing parameters'
+                    });
+                }
+            });
+        }
+        
+        function testNPVRecalculation() {
+            const wells = dataStore.getActiveWells();
+            if (wells.length === 0) {
+                results.push({
+                    test: 'NPV Recalculation',
+                    status: 'fail',
+                    details: 'No active wells found'
+                });
+                return;
+            }
+            
+            const well = wells[0];
+            
+            // Calculate NPV at different oil prices
+            const npv50 = analytics.calculateScenarioNPV(well, 50, 2.5, 10);
+            const npv70 = analytics.calculateScenarioNPV(well, 70, 3.5, 10);
+            const npv90 = analytics.calculateScenarioNPV(well, 90, 5.0, 10);
+            
+            if (npv50 < npv70 && npv70 < npv90) {
+                results.push({
+                    test: 'NPV increases with price',
+                    status: 'pass',
+                    details: `NPV@$50: $${npv50.toFixed(2)}M, NPV@$70: $${npv70.toFixed(2)}M, NPV@$90: $${npv90.toFixed(2)}M`
+                });
+            } else {
+                results.push({
+                    test: 'NPV increases with price',
+                    status: 'fail',
+                    details: `NPV trend incorrect`
+                });
+            }
+        }
+        
+        function testScenarioComparison() {
+            const comparison = analytics.compareScenarios();
+            
+            if (comparison && comparison.scenarios) {
+                const bear = comparison.scenarios.bear.metrics;
+                const base = comparison.scenarios.base.metrics;
+                const bull = comparison.scenarios.bull.metrics;
+                
+                if (bear.totalNPV < base.totalNPV && base.totalNPV < bull.totalNPV) {
+                    results.push({
+                        test: 'Scenario comparison',
+                        status: 'pass',
+                        details: `Bear: $${bear.totalNPV.toFixed(1)}M, Base: $${base.totalNPV.toFixed(1)}M, Bull: $${bull.totalNPV.toFixed(1)}M`
+                    });
+                } else {
+                    results.push({
+                        test: 'Scenario comparison',
+                        status: 'fail',
+                        details: 'NPV ordering incorrect'
+                    });
+                }
+            } else {
+                results.push({
+                    test: 'Scenario comparison',
+                    status: 'fail',
+                    details: 'Comparison failed'
+                });
+            }
+        }
+        
+        function testAssetScenarios() {
+            const assets = dataStore.getAssets();
+            if (assets.length === 0) {
+                results.push({
+                    test: 'Asset scenarios',
+                    status: 'fail',
+                    details: 'No assets found'
+                });
+                return;
+            }
+            
+            const assetScenarios = analytics.calculateAssetScenarios(70, 3.5, 10);
+            
+            if (Object.keys(assetScenarios).length > 0) {
+                results.push({
+                    test: 'Asset-level scenarios',
+                    status: 'pass',
+                    details: `${Object.keys(assetScenarios).length} assets analyzed`
+                });
+            } else {
+                results.push({
+                    test: 'Asset-level scenarios',
+                    status: 'fail',
+                    details: 'No asset scenarios calculated'
+                });
+            }
+        }
+        
+        function testSensitivityAnalysis() {
+            const comparison = analytics.compareScenarios();
+            const base = comparison.scenarios.base.metrics.totalNPV;
+            const bull = comparison.scenarios.bull.metrics.totalNPV;
+            
+            const delta = bull - base;
+            const sensitivity = (delta / base) * 100;
+            
+            if (sensitivity > 0) {
+                results.push({
+                    test: 'Price sensitivity',
+                    status: 'pass',
+                    details: `${sensitivity.toFixed(1)}% NPV increase from Base to Bull case`
+                });
+            } else {
+                results.push({
+                    test: 'Price sensitivity',
+                    status: 'fail',
+                    details: 'Sensitivity calculation failed'
+                });
+            }
+        }
+        
+        function displayResults(duration) {
+            const container = document.getElementById('testResults');
+            const passed = results.filter(r => r.status === 'pass').length;
+            const failed = results.filter(r => r.status === 'fail').length;
+            
+            let html = '<div class="test-section">';
+            html += `<h2>Test Summary</h2>`;
+            html += `<p><strong>Total Tests:</strong> ${results.length} | `;
+            html += `<strong style="color: #22c55e;">Passed:</strong> ${passed} | `;
+            html += `<strong style="color: #ef4444;">Failed:</strong> ${failed} | `;
+            html += `<strong>Duration:</strong> ${duration}s</p>`;
+            html += '</div>';
+            
+            html += '<div class="test-section">';
+            html += '<h2>Test Results</h2>';
+            results.forEach(result => {
+                const cssClass = result.status === 'pass' ? 'test-pass' : 'test-fail';
+                const icon = result.status === 'pass' ? '✅' : '❌';
+                html += `<div class="test-result ${cssClass}">`;
+                html += `<strong>${icon} ${result.test}</strong><br>`;
+                html += `<span>${result.details}</span>`;
+                html += '</div>';
+            });
+            html += '</div>';
+            
+            // Display scenario comparison table
+            const comparison = analytics.compareScenarios();
+            if (comparison) {
+                html += '<div class="test-section">';
+                html += '<h2>Scenario Comparison Data</h2>';
+                html += '<table>';
+                html += '<thead><tr>';
+                html += '<th>Metric</th>';
+                html += '<th>Bear Case ($50 oil)</th>';
+                html += '<th>Base Case ($70 oil)</th>';
+                html += '<th>Bull Case ($90 oil)</th>';
+                html += '</tr></thead><tbody>';
+                
+                const bear = comparison.scenarios.bear.metrics;
+                const base = comparison.scenarios.base.metrics;
+                const bull = comparison.scenarios.bull.metrics;
+                
+                html += '<tr>';
+                html += '<td><strong>Portfolio NPV (MM$)</strong></td>';
+                html += `<td class="metric-value">$${bear.totalNPV.toFixed(1)}</td>`;
+                html += `<td class="metric-value">$${base.totalNPV.toFixed(1)}</td>`;
+                html += `<td class="metric-value">$${bull.totalNPV.toFixed(1)}</td>`;
+                html += '</tr>';
+                
+                html += '<tr>';
+                html += '<td><strong>Average IRR (%)</strong></td>';
+                html += `<td class="metric-value">${bear.avgIRR.toFixed(1)}%</td>`;
+                html += `<td class="metric-value">${base.avgIRR.toFixed(1)}%</td>`;
+                html += `<td class="metric-value">${bull.avgIRR.toFixed(1)}%</td>`;
+                html += '</tr>';
+                
+                html += '<tr>';
+                html += '<td><strong>Wells Above Hurdle (15%)</strong></td>';
+                html += `<td class="metric-value">${bear.wellsAboveHurdle}</td>`;
+                html += `<td class="metric-value">${base.wellsAboveHurdle}</td>`;
+                html += `<td class="metric-value">${bull.wellsAboveHurdle}</td>`;
+                html += '</tr>';
+                
+                html += '</tbody></table>';
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+        
+        // Run tests on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            console.log('🧪 Starting Scenario Analysis Tests...');
+            runTests();
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,4 @@
+id,name,asset,status,spudDate,completionDate,vintage,operator,field,latitude,longitude,totalDepth,lateralLength,completionType,proppantLoaded,stages,drillingDays,wellCost,ip30,eur,breakEven,npv,irr,currentProduction,forecast,waterCut,gor
+W-001,Eagle Ford 1H,Eagle Ford,Active,2022-03-15,2022-05-20,2022,ABC Energy,South Block,28.5,-98.5,18500,9500,Slickwater,7500,45,18,8.5,1250,580,38,12.5,45,425,450,15,850
+W-002,Permian 2H,Permian Basin,Active,2023-01-10,2023-03-05,2023,XYZ Oil,West Field,31.8,-102.3,20000,10500,Hybrid,8200,50,16,9.2,1450,720,35,18.3,52,680,720,8,920
+W-003,Bakken 3H,Bakken,Active,2021-08-20,2021-10-15,2021,North Energy,Central Area,47.9,-103.4,19800,9800,Slickwater,7800,48,20,8.8,980,480,42,8.7,38,210,280,25,780

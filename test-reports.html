@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OkhikuAnalytics Pro - Report Generation Test</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2563eb;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 8px;
+            border-left: 4px solid #2563eb;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        .status {
+            display: inline-block;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-weight: bold;
+            font-size: 14px;
+        }
+        .status.success {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        .status.error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        .status.pending {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            margin: 10px 10px 10px 0;
+        }
+        button:hover {
+            background: #1d4ed8;
+        }
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 15px;
+            padding: 15px;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 14px;
+        }
+        .info {
+            background: #dbeafe;
+            border-left: 4px solid #2563eb;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .success-message {
+            background: #d1fae5;
+            border-left: 4px solid #10b981;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        code {
+            background: #f3f4f6;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 OkhikuAnalytics Pro - Diagnostic Test</h1>
+        <p class="subtitle">Test report generation functionality</p>
+
+        <div class="info">
+            <strong>📋 Purpose:</strong> This page will help diagnose and test the report generation features.
+            <br><strong>✅ Requirements:</strong> Internet connection (for first-time library loading)
+        </div>
+
+        <!-- Library Status -->
+        <div class="test-section">
+            <h3>1. Library Status Check</h3>
+            <p>Checking if required libraries are loaded...</p>
+            
+            <div style="margin: 15px 0;">
+                <strong>Chart.js:</strong> <span id="chartjsStatus" class="status pending">Checking...</span>
+            </div>
+            <div style="margin: 15px 0;">
+                <strong>jsPDF:</strong> <span id="jspdfStatus" class="status pending">Checking...</span>
+            </div>
+            <div style="margin: 15px 0;">
+                <strong>html2canvas:</strong> <span id="html2canvasStatus" class="status pending">Checking...</span>
+            </div>
+            
+            <button onclick="checkLibraries()">🔄 Recheck Libraries</button>
+        </div>
+
+        <!-- Simple PDF Test -->
+        <div class="test-section">
+            <h3>2. Simple PDF Generation Test</h3>
+            <p>Generate a basic PDF to test jsPDF functionality</p>
+            
+            <button onclick="testSimplePDF()" id="simplePdfBtn">📄 Generate Test PDF</button>
+            
+            <div id="simplePdfResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Chart Capture Test -->
+        <div class="test-section">
+            <h3>3. Chart Capture Test</h3>
+            <p>Test if charts can be captured as images</p>
+            
+            <!-- Simple test chart -->
+            <div style="margin: 20px 0;">
+                <canvas id="testChart" style="max-height: 200px;"></canvas>
+            </div>
+            
+            <button onclick="createTestChart()">📊 Create Test Chart</button>
+            <button onclick="testChartCapture()" id="captureChartBtn">📸 Capture Chart</button>
+            
+            <div id="chartCaptureResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Full Report Test -->
+        <div class="test-section">
+            <h3>4. Full Report Generation Test</h3>
+            <p>Test complete report generation with charts</p>
+            
+            <button onclick="testFullReport()" id="fullReportBtn">📑 Generate Test Report</button>
+            
+            <div id="fullReportResult" class="result" style="display: none;"></div>
+        </div>
+
+        <div class="info" style="margin-top: 30px;">
+            <strong>💡 Troubleshooting:</strong>
+            <ul style="margin: 10px 0;">
+                <li>If libraries fail to load: Check your internet connection</li>
+                <li>If PDF doesn't download: Check browser pop-up settings</li>
+                <li>Press <code>F12</code> to see detailed error messages in console</li>
+                <li>Try refreshing the page (<code>F5</code>)</li>
+            </ul>
+        </div>
+
+        <div style="margin-top: 30px; padding-top: 20px; border-top: 2px solid #e5e7eb; text-align: center; color: #666;">
+            <p><strong>OkhikuAnalytics Pro</strong> - Advanced Oil & Gas Analytics by Joseph Okhiku</p>
+            <p style="font-size: 14px;">If all tests pass, report generation is working correctly!</p>
+        </div>
+    </div>
+
+    <!-- Load required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+    <script>
+        let testChartInstance = null;
+
+        // Check if libraries are loaded
+        function checkLibraries() {
+            // Chart.js
+            const chartjsEl = document.getElementById('chartjsStatus');
+            if (typeof Chart !== 'undefined') {
+                chartjsEl.textContent = '✓ Loaded';
+                chartjsEl.className = 'status success';
+            } else {
+                chartjsEl.textContent = '✗ Not Loaded';
+                chartjsEl.className = 'status error';
+            }
+
+            // jsPDF
+            const jspdfEl = document.getElementById('jspdfStatus');
+            if (window.jspdf && window.jspdf.jsPDF) {
+                jspdfEl.textContent = '✓ Loaded';
+                jspdfEl.className = 'status success';
+            } else {
+                jspdfEl.textContent = '✗ Not Loaded';
+                jspdfEl.className = 'status error';
+            }
+
+            // html2canvas
+            const html2canvasEl = document.getElementById('html2canvasStatus');
+            if (typeof html2canvas !== 'undefined') {
+                html2canvasEl.textContent = '✓ Loaded';
+                html2canvasEl.className = 'status success';
+            } else {
+                html2canvasEl.textContent = '✗ Not Loaded';
+                html2canvasEl.className = 'status error';
+            }
+        }
+
+        // Test simple PDF generation
+        function testSimplePDF() {
+            const resultDiv = document.getElementById('simplePdfResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Generating PDF...';
+
+            try {
+                if (!window.jspdf) {
+                    throw new Error('jsPDF library not loaded. Check internet connection.');
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Add content
+                doc.setFontSize(20);
+                doc.setTextColor(37, 99, 235);
+                doc.text('OkhikuAnalytics Pro', 20, 20);
+
+                doc.setFontSize(16);
+                doc.setTextColor(0, 0, 0);
+                doc.text('Test Report', 20, 35);
+
+                doc.setFontSize(12);
+                doc.text('This is a test PDF to verify jsPDF functionality.', 20, 50);
+                doc.text('Generated: ' + new Date().toLocaleString(), 20, 60);
+                doc.text('By: Joseph Okhiku', 20, 70);
+
+                // Save
+                doc.save('OkhikuAnalytics_Test_Report.pdf');
+
+                resultDiv.innerHTML = '<strong style="color: #10b981;">✓ Success!</strong><br>Test PDF generated and should have downloaded.<br>Check your Downloads folder for: <code>OkhikuAnalytics_Test_Report.pdf</code>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong style="color: #ef4444;">✗ Error:</strong><br>' + error.message;
+                console.error('PDF generation error:', error);
+            }
+        }
+
+        // Create a test chart
+        function createTestChart() {
+            const ctx = document.getElementById('testChart');
+            
+            if (testChartInstance) {
+                testChartInstance.destroy();
+            }
+
+            testChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Well 1', 'Well 2', 'Well 3', 'Well 4', 'Well 5'],
+                    datasets: [{
+                        label: 'Production (BBL/day)',
+                        data: [450, 680, 210, 890, 380],
+                        backgroundColor: [
+                            'rgba(37, 99, 235, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(239, 68, 68, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(37, 99, 235)',
+                            'rgb(16, 185, 129)',
+                            'rgb(245, 158, 11)',
+                            'rgb(139, 92, 246)',
+                            'rgb(239, 68, 68)'
+                        ],
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        title: {
+                            display: true,
+                            text: 'Test Production Chart'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'BBL/day'
+                            }
+                        }
+                    }
+                }
+            });
+
+            alert('✓ Test chart created! Now try "Capture Chart" button.');
+        }
+
+        // Test chart capture
+        function testChartCapture() {
+            const resultDiv = document.getElementById('chartCaptureResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Capturing chart...';
+
+            try {
+                const canvas = document.getElementById('testChart');
+                if (!canvas) {
+                    throw new Error('Test chart not found. Click "Create Test Chart" first.');
+                }
+
+                const imageData = canvas.toDataURL('image/png');
+                
+                // Create download link
+                const link = document.createElement('a');
+                link.download = 'OkhikuAnalytics_Test_Chart.png';
+                link.href = imageData;
+                link.click();
+
+                resultDiv.innerHTML = '<strong style="color: #10b981;">✓ Success!</strong><br>Chart captured and should have downloaded.<br>Check your Downloads folder for: <code>OkhikuAnalytics_Test_Chart.png</code>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong style="color: #ef4444;">✗ Error:</strong><br>' + error.message;
+                console.error('Chart capture error:', error);
+            }
+        }
+
+        // Test full report with chart
+        async function testFullReport() {
+            const resultDiv = document.getElementById('fullReportResult');
+            resultDiv.style.display = 'block';
+            resultDiv.textContent = 'Generating full report with chart...';
+
+            try {
+                if (!window.jspdf) {
+                    throw new Error('jsPDF library not loaded.');
+                }
+
+                // Create chart if not exists
+                if (!testChartInstance) {
+                    createTestChart();
+                    await new Promise(resolve => setTimeout(resolve, 500)); // Wait for chart to render
+                }
+
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+
+                // Header
+                doc.setFontSize(20);
+                doc.setTextColor(37, 99, 235);
+                doc.text('OkhikuAnalytics Pro', 20, 20);
+
+                doc.setFontSize(14);
+                doc.setTextColor(0, 0, 0);
+                doc.text('Test Report with Chart', 20, 30);
+
+                doc.setFontSize(10);
+                doc.setTextColor(100, 100, 100);
+                doc.text('Generated: ' + new Date().toLocaleString(), 20, 38);
+                doc.text('Advanced Oil & Gas Analytics by Joseph Okhiku', 20, 44);
+
+                // Add chart
+                doc.setFontSize(12);
+                doc.setTextColor(0, 0, 0);
+                doc.text('Production Overview', 20, 60);
+
+                const canvas = document.getElementById('testChart');
+                const chartImage = canvas.toDataURL('image/png');
+                doc.addImage(chartImage, 'PNG', 20, 65, 170, 80);
+
+                // Footer
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text('Page 1 of 1', 105, 285, { align: 'center' });
+                doc.text('© 2024 Joseph Okhiku', 190, 285, { align: 'right' });
+
+                // Save
+                doc.save('OkhikuAnalytics_Full_Test_Report.pdf');
+
+                resultDiv.innerHTML = '<strong style="color: #10b981;">✓ Success!</strong><br>Full report with chart generated!<br>Check your Downloads folder for: <code>OkhikuAnalytics_Full_Test_Report.pdf</code><br><br><em>If this works, report generation in the main app should work too!</em>';
+            } catch (error) {
+                resultDiv.innerHTML = '<strong style="color: #ef4444;">✗ Error:</strong><br>' + error.message;
+                console.error('Full report error:', error);
+            }
+        }
+
+        // Run library check on page load
+        window.addEventListener('load', () => {
+            setTimeout(checkLibraries, 1000);
+        });
+    </script>
+</body>
+</html>
